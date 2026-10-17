@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5/3/1 SST</title>
+<meta name="description" content="Chương trình 5/3/1 SST cá nhân: 5/5/5, bài phụ SST, ghi chép từng set.">
+<meta name="theme-color" content="#2f3a35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="5/3/1 SST">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tập kiểu bảng ghi tạ — thanh tuần ở trên, mỗi buổi là một khối, mỗi set một dòng: tích · kg · rep */
+:root{
+  --bg:#f3f4f2; --panel:#ffffff; --fg:#1b1f1d; --muted:#5d6661; --line:#d9ddd9;
+  --plate:#c8322b; --plate-soft:#f6e1df; --iron:#2f3a35; --ok:#2f7d4f; --field:#f7f8f6;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141716; --panel:#1d2120; --fg:#e8ebe9; --muted:#9aa49f; --line:#323836;
+  --plate:#ef5a50; --plate-soft:#3a2321; --iron:#c9d2cd; --ok:#5fbf86; --field:#161a19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141716; --panel:#1d2120; --fg:#e8ebe9; --muted:#9aa49f; --line:#323836;
+  --plate:#ef5a50; --plate-soft:#3a2321; --iron:#c9d2cd; --ok:#5fbf86; --field:#161a19; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(28px + env(safe-area-inset-top,0px));padding-bottom:calc(48px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+.data-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.data-row button.primary{background:var(--iron);color:var(--bg);border-color:var(--iron);font-weight:600}
+.data-row button.warn{background:var(--plate);border-color:var(--plate);color:#fff;font-weight:600}
+.confirm{display:flex;flex-direction:column;gap:8px;background:var(--plate-soft);border:1px solid var(--plate);border-radius:6px;padding:12px 14px}
+.status{font-size:.88rem;color:var(--muted)}
+.status.ok{color:var(--ok)}
+.status.err{color:var(--plate)}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:2.6rem;font-weight:700;text-transform:uppercase}
+h1 span{color:var(--plate)}
+h2{font-size:1.5rem;font-weight:600;text-transform:uppercase}
+h3{font-size:1.25rem;font-weight:600}
+p{margin:0;max-width:70ch}
+.lede{color:var(--muted)}
+.eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.12em;font-size:.85rem;color:var(--plate);font-weight:600}
+section{display:flex;flex-direction:column;gap:14px}
+
+.tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tm{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tm label{font-size:.82rem;color:var(--muted)}
+.tm .row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.tm input{width:84px;font-family:var(--f-num);font-size:1rem;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--field);color:var(--fg)}
+.tm .tmv{font-family:var(--f-num);font-weight:600;font-size:1.02rem;font-variant-numeric:tabular-nums}
+.tm .tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tm.main{border-left:4px solid var(--plate)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls label{font-size:.88rem;color:var(--muted)}
+.controls .chk{display:flex;gap:6px;align-items:center;color:var(--fg)}
+select,button{font:inherit;font-size:.9rem;padding:6px 10px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--plate);outline-offset:2px}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font-family:var(--f-display);font-size:1.05rem;text-transform:uppercase;letter-spacing:.05em;padding:8px 14px;border:1px solid var(--line);background:var(--panel);border-radius:4px;color:var(--fg)}
+.tab small{display:block;font-family:var(--f-body);text-transform:none;letter-spacing:0;font-size:.72rem;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--plate);border-color:var(--plate);color:#fff}
+.tab[aria-selected="true"] small{color:#fff;opacity:.85}
+.tab.dl{border-style:dashed}
+.week-note{font-size:.9rem;color:var(--muted)}
+.week-note b{color:var(--fg);font-weight:600}
+
+.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.day{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.day header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.day header .dow{font-family:var(--f-display);font-size:.95rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);white-space:nowrap}
+.day.acc{border-style:dashed}
+.ex{display:flex;flex-direction:column;gap:5px}
+.ex + .ex{border-top:1px dashed var(--line);padding-top:10px}
+.ex .name{font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ex .kind{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500;white-space:nowrap}
+.ex.main .kind{color:var(--plate)}
+.ex.sm .name{font-weight:500;font-size:.93rem}
+.sets{display:flex;flex-direction:column;gap:3px}
+.set{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:8px;padding:3px 6px;border-radius:4px}
+.set input[type=checkbox]{width:17px;height:17px;accent-color:var(--ok);margin:0}
+.set.top{background:var(--plate-soft)}
+.set.done .io input{color:var(--muted)}
+.io{display:flex;align-items:center;gap:4px;font-family:var(--f-num);font-size:.9rem;color:var(--muted);min-width:0;flex-wrap:wrap}
+.io input{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:.95rem;padding:3px 5px;border:1px solid var(--line);border-radius:4px;background:var(--field);color:var(--fg);text-align:right}
+.io input.kg{width:66px}
+.io input.rp{width:46px}
+.io input.edited{border-color:var(--plate)}
+.io .u{font-size:.75rem}
+.set .pct{color:var(--muted);font-size:.76rem;font-family:var(--f-num)}
+
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.rule p{font-size:.92rem;color:var(--muted)}
+.rule p b{color:var(--fg);font-weight:600}
+.foot{font-size:.82rem;color:var(--muted)}
+@media (max-width:480px){h1{font-size:2.1rem}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <div class="eyebrow">Khối 7 tuần · 6 tuần tập + 1 tuần deload · 3 buổi chính + 1 buổi bổ trợ tự chọn</div>
+    <h1>5/3/1 <span>SST</span> của bạn</h1>
+    <p class="lede">Mỗi tuần có 3 buổi chính: Bench Press, một buổi thân dưới, Overhead Press. Buổi thân dưới xen kẽ giữa Leg Press và Deadlift qua từng tuần. Thêm 1 buổi bổ trợ tự chọn vào ngày nào cũng được. Bài chính tập 5/5/5, bài phụ lớn theo phần trăm SST. Training Max bằng 90% 1RM, làm tròn xuống tới kg.</p>
+  </header>
+
+  <section aria-labelledby="wk-h">
+    <h2 id="wk-h">Lịch tập</h2>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <p class="week-note" id="weekNote"></p>
+    <div class="days" id="days"></div>
+    <p class="foot">Ô có viền đỏ là số bạn đã tự sửa. Với bài phụ nhỏ và buổi tự chọn, số kg và rep bạn sửa sẽ tự mang sang tuần sau, trừ tuần deload. Xóa trống một ô thì ô đó quay về số mặc định.</p>
+  </section>
+
+  <section aria-labelledby="tm-h">
+    <h2 id="tm-h">1RM, Training Max và cài đặt</h2>
+    <p class="week-note">Bài thân trên đi hết 2 chu kỳ mỗi khối: chu kỳ A ở tuần 1–3, chu kỳ B ở tuần 4–6, mỗi chu kỳ TM tăng 1,5 kg. Bài thân dưới chỉ tập cách tuần, nên mỗi khối đi đúng 1 chu kỳ (3 buổi) và TM tăng 3 kg mỗi khối. Bạn có thể sửa 1RM ở đây, mọi mức tạ sẽ tự tính lại.</p>
+    <div class="controls">
+      <label for="block">Khối</label>
+      <select id="block"></select>
+      <label for="stepU">Làm tròn thân trên</label>
+      <select id="stepU"><option value="1">1 kg</option><option value="1.25">1,25 kg</option><option value="2">2 kg</option><option value="2.5">2,5 kg</option></select>
+      <label for="stepL">Làm tròn thân dưới</label>
+      <select id="stepL"><option value="2.5">2,5 kg</option><option value="1">1 kg</option><option value="2">2 kg</option><option value="5">5 kg</option></select>
+      <label for="plus" class="chk"><input type="checkbox" id="plus"> Set cuối bài chính là set "+"</label>
+      <button id="reset" type="button">Khôi phục 1RM ban đầu</button>
+    </div>
+    <div class="tm-grid" id="tmGrid"></div>
+  </section>
+
+  <section aria-labelledby="data-h">
+    <h2 id="data-h">Sao lưu dữ liệu</h2>
+    <p class="week-note">Ghi chép được lưu ngay trên điện thoại này. Thỉnh thoảng hãy xuất một file sao lưu (cuối mỗi khối chẳng hạn) và cất vào Files, Google Drive hoặc Zalo của chính bạn. Khi đổi máy hoặc cài lại app, bạn chỉ cần nhập file đó.</p>
+    <div class="data-row">
+      <button id="exportBtn" type="button" class="primary">Xuất file sao lưu</button>
+      <label for="importFile" style="font-size:.88rem;color:var(--muted)">Nhập từ file</label>
+      <input id="importFile" type="file" accept=".json,application/json">
+    </div>
+    <div class="confirm" id="importConfirm" hidden>
+      <p id="importInfo"></p>
+      <div class="data-row">
+        <button id="importYes" type="button" class="warn">Ghi đè và nhập</button>
+        <button id="importNo" type="button">Hủy</button>
+      </div>
+    </div>
+    <p class="status" id="dataStatus" role="status"></p>
+  </section>
+
+  <section aria-labelledby="rules-h">
+    <h2 id="rules-h">Nguyên tắc để bớt "đuối"</h2>
+    <div class="rules">
+      <div class="rule"><h3>Set cuối: 5 hay 5+</h3><p>Mặc định là 5's PRO: kể cả còn sức, bạn cũng <b>dừng ở rep thứ 5</b>. Nếu bật set "+", chỉ làm thêm rep khi tốc độ đẩy vẫn tốt, <b>dừng khi còn 1–2 rep dự trữ</b>, và ghi số rep đạt được vào ô rep.</p></div>
+      <div class="rule"><h3>Tuần nặng nhất (95% × 5)</h3><p>Với bài thân trên là tuần 3 và tuần 6. Với bài thân dưới là buổi thứ ba của mỗi bài trong khối. Nếu thanh tạ chậm hẳn, <b>dừng ở 3–4 rep là đủ</b>, và chu kỳ sau giữ nguyên TM.</p></div>
+      <div class="rule"><h3>Bài phụ lớn: đúng số rep</h3><p>Ba set tăng dần theo bảng SST, <b>không làm thêm rep</b>. Machine Row giờ cũng theo phần trăm này, nên những tuần đầu sẽ nhẹ hơn mức 80 kg × 10 bạn đang tập.</p></div>
+      <div class="rule"><h3>Bài phụ nhỏ: tăng kép</h3><p>Để dư khoảng 2 rep. Khi mọi set đã chạm mốc rep cao của khoảng, tuần sau tăng một nấc tạ: sửa ô kg, số mới sẽ tự mang sang các tuần sau.</p></div>
+      <div class="rule"><h3>Tuần 7 deload, đừng bỏ</h3><p>Bài chính và bài phụ lớn tập 40 / 50 / 60%. Bài phụ nhỏ và buổi tự chọn ít set hơn và giảm khoảng 20% tạ. Nếu thấy kiệt sức trước tuần 7, cứ deload sớm hơn.</p></div>
+      <div class="rule"><h3>Ghi chép được lưu ở đâu</h3><p>Dấu tích và số bạn sửa được lưu ngay trong app trên máy này, dùng được cả khi không có mạng. <b>Xuất file sao lưu định kỳ</b> để không mất lịch sử tập khi đổi máy hoặc xóa app.</p></div>
+    </div>
+    <p class="foot">Phần trăm theo "5/3/1" (Jim Wendler, bản 2011): bài chính trang 10–24, Simplest Strength Template trang 52–58. Kiểu 5/5/5 không có set "+" là cách "5's PRO" trong các sách sau của Jim.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+const DEFAULT={bench:113,ohp:58,lp:215,dl:125,row:106.6,mbench:96.2,rdl:98,msquat:51.3};
+const UP=1.5, LOW=3;
+const LIFTS={
+  bench:{n:"Bench Press",tag:"Bài chính",up:true,main:true,src:"1RM ước tính"},
+  ohp:{n:"Overhead Press",tag:"Bài chính",up:true,main:true,src:"1RM ước tính"},
+  lp:{n:"Leg Press",tag:"Bài chính",up:false,main:true,src:"1RM ước tính"},
+  dl:{n:"Deadlift",tag:"Bài chính",up:false,main:true,src:"1RM ước tính"},
+  row:{n:"Machine Row",tag:"SST",up:true,src:"từ 80 × 10"},
+  mbench:{n:"Machine Bench Press",tag:"SST",up:true,src:"từ 82,5 × 5"},
+  rdl:{n:"Romanian Deadlift",tag:"SST",up:false,src:"từ 84 × 5"},
+  msquat:{n:"Machine Squat",tag:"SST",up:false,src:"từ 44 × 5"}
+};
+const SMALL={
+  incline:{n:"Incline Bench Press",sets:3,reps:10,kg:50,target:"3 × 8–12",up:true},
+  ohtri:{n:"Overhead Triceps Extension",sets:3,reps:10,kg:45,target:"3 × 10–15",up:true},
+  pulldown:{n:"Lat Pulldown",sets:3,reps:10,kg:60,target:"3 × 10–15",up:true},
+  curl:{n:"Machine Biceps Curl",sets:3,reps:10,kg:45,target:"3 × 10–12",up:true},
+  legext:{n:"Leg Extension",sets:2,reps:15,kg:90,target:"2 × 15–20",up:false},
+  adductor:{n:"Leg Adductor",sets:2,reps:12,kg:60,target:"2 × 12–15",up:false},
+  legcurl:{n:"Leg Curl",sets:3,reps:10,kg:55,target:"3 × 10–12",up:false},
+  hlr:{n:"Hanging Leg Raise",sets:3,reps:10,kg:0,target:"3 × 10–15",bw:true},
+  chin:{n:"Chin-ups",sets:5,reps:6,kg:0,target:"5 × 6",bw:true},
+  reardelt:{n:"Rear Delt",sets:3,reps:10,kg:[30,35,40],target:"3 × 10",up:true},
+  lateral:{n:"Lateral Raise",sets:3,reps:15,kg:8,target:"3 × 15 · tạ đơn",up:true},
+  rope:{n:"Triceps Rope Pushdown",sets:3,reps:15,kg:[55,60,65],target:"3 × 15",up:true}
+};
+const MAIN=[[.65,.75,.85],[.70,.80,.90],[.75,.85,.95],[.40,.50,.60]];
+const SST=[[[.5,10],[.6,10],[.7,10]],[[.6,8],[.7,8],[.8,6]],[[.65,5],[.75,5],[.85,5]],[[.4,5],[.5,5],[.6,5]]];
+const WAVE=["65 / 75 / 85%","70 / 80 / 90%","75 / 85 / 95%","40 / 50 / 60%"];
+
+const S={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+         set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let rm=Object.assign({},DEFAULT,S.get("sst4.rm",{}));
+let block=S.get("sst4.block",1), week=S.get("sst4.week",0);
+let stepU=S.get("sst4.stepU",1), stepL=S.get("sst4.stepL",2.5), plus=S.get("sst4.plus",false);
+if(!(week>=0&&week<=6)) week=0;
+let log=S.get("sst4.log",{});
+const save=()=>S.set("sst4.log",log);
+
+const fmt=x=>(Math.round(x*100)/100).toLocaleString("vi-VN",{maximumFractionDigits:2});
+const val=x=>String(Math.round(x*100)/100);
+const rnd=(x,up)=>{const s=up?stepU:stepL;return Math.round(x/s)*s};
+const G=w=>(block-1)*7+w;
+const lowerFor=w=>(G(w)%2===0)?"lp":"dl";
+const tmAt=(k,blk,w)=>{const L=LIFTS[k],base=Math.floor(rm[k]*0.9);
+  if(L.up) return base+((blk-1)*2+(w<3?0:1))*UP;
+  return base+(blk-1)*LOW;};
+const waveOf=(k,w)=>w===6?3:(LIFTS[k].up?w%3:Math.floor(w/2));
+const isDL=()=>week===6;
+
+const bsel=document.getElementById("block");
+for(let i=1;i<=10;i++){const o=document.createElement("option");o.value=i;o.textContent="Khối "+i;bsel.appendChild(o)}
+bsel.value=block;
+document.getElementById("stepU").value=String(stepU);
+document.getElementById("stepL").value=String(stepL);
+document.getElementById("plus").checked=plus;
+
+function renderTM(){
+  const g=document.getElementById("tmGrid"); g.innerHTML="";
+  Object.keys(LIFTS).forEach(k=>{
+    const L=LIFTS[k], d=document.createElement("div"); d.className="tm"+(L.main?" main":"");
+    const rows=L.up
+      ? `<div class="row"><span class="tag">TM tuần 1–3</span><span class="tmv">${fmt(tmAt(k,block,0))} kg</span></div>
+         <div class="row"><span class="tag">TM tuần 4–7</span><span class="tmv">${fmt(tmAt(k,block,3))} kg</span></div>`
+      : `<div class="row"><span class="tag">TM khối ${block}</span><span class="tmv">${fmt(tmAt(k,block,0))} kg</span></div>`;
+    d.innerHTML=`<div class="row"><b>${L.n}</b><span class="tag">${L.tag}</span></div>
+      <div class="row"><label for="rm-${k}">1RM (${L.src})</label><input id="rm-${k}" type="number" step="0.5" min="0" value="${rm[k]}"></div>${rows}`;
+    g.appendChild(d);
+    d.querySelector("input").addEventListener("change",e=>{const v=parseFloat(e.target.value);if(v>0){rm[k]=v;S.set("sst4.rm",rm);renderAll()}});
+  });
+}
+function renderTabs(){
+  const t=document.getElementById("tabs"); t.innerHTML="";
+  for(let i=0;i<7;i++){
+    const b=document.createElement("button");b.type="button";b.className="tab"+(i===6?" dl":"");b.setAttribute("role","tab");
+    b.setAttribute("aria-selected",i===week?"true":"false");
+    b.innerHTML=(i===6?"Tuần 7 · Deload":"Tuần "+(i+1))+`<small>${LIFTS[lowerFor(i)].n}</small>`;
+    b.onclick=()=>{week=i;S.set("sst4.week",i);renderTabs();renderDays()};t.appendChild(b);
+  }
+  const low=lowerFor(week), n=document.getElementById("weekNote");
+  if(isDL()) n.innerHTML=`<b>Deload</b> · bài chính và bài phụ lớn ${WAVE[3]} × 5, dùng TM chu kỳ B. Buổi thân dưới tuần này: <b>${LIFTS[low].n}</b>. Bài phụ nhỏ ít set hơn, giảm khoảng 20% tạ.`;
+  else n.innerHTML=`Thân trên (chu kỳ ${week<3?"A":"B"}): <b>${WAVE[week%3]} × 5</b> · Buổi thân dưới: <b>${LIFTS[low].n}</b>, lần ${Math.floor(week/2)+1}/3 trong khối: <b>${WAVE[Math.floor(week/2)]} × 5</b>`;
+}
+
+function setRow(ex,i,kgDef,repDef,opt){
+  opt=opt||{};
+  const g=G(week), base=`${g}|${ex}|${i}|`, kK=base+"kg", rK=base+"r", cK=base+"c";
+  const kEd=log[kK]!==undefined, rEd=log[rK]!==undefined;
+  const kg=kEd?log[kK]:kgDef, r=rEd?log[rK]:repDef;
+  return `<div class="set${opt.top?" top":""}${log[cK]?" done":""}">
+    <input type="checkbox" data-k="${cK}" ${log[cK]?"checked":""} aria-label="Đã xong set ${i+1}">
+    <span class="io"><input class="kg${kEd?" edited":""}" type="number" inputmode="decimal" step="0.5" min="0" data-k="${kK}" value="${val(kg)}" aria-label="Số kg set ${i+1}"><span class="u">${opt.bw?"kg thêm":"kg"}</span>
+    × <input class="rp${rEd?" edited":""}" type="number" inputmode="numeric" min="0" data-k="${rK}" value="${r}" aria-label="Số rep set ${i+1}">${opt.plus?'<span class="u">+</span>':""}</span>
+    <span class="pct">${opt.pct||""}</span></div>`;
+}
+function mainHTML(k){
+  const L=LIFTS[k], w=waveOf(k,week), T=tmAt(k,block,week);
+  const rows=MAIN[w].map((p,i)=>{const top=i===2&&w!==3;
+    return setRow(k,i,rnd(T*p,L.up),5,{top,plus:top&&plus,pct:Math.round(p*100)+"%"})}).join("");
+  const kind=isDL()?"Deload":(plus?"5/5/5+":"5/5/5 · không set +");
+  return `<div class="ex main"><div class="name">${L.n}<span class="kind">${kind}</span></div><div class="sets">${rows}</div></div>`;
+}
+function sstHTML(k){
+  const L=LIFTS[k], w=waveOf(k,week), T=tmAt(k,block,week);
+  const rows=SST[w].map(([p,r],i)=>setRow(k,i,rnd(T*p,L.up),r,{pct:Math.round(p*100)+"%"})).join("");
+  return `<div class="ex"><div class="name">${L.n}<span class="kind">SST · không thêm rep</span></div><div class="sets">${rows}</div></div>`;
+}
+function carry(ex,i,field,def){
+  for(let g=G(week)-1;g>=0;g--){ if(g%7===6) continue;
+    const v=log[`${g}|${ex}|${i}|${field}`]; if(v!==undefined) return v; }
+  return def;
+}
+function smallHTML(id){
+  const E=SMALL[id], dl=isDL();
+  const n=dl?Math.max(2,Math.round(E.sets*0.6)):E.sets;
+  let rows="";
+  for(let i=0;i<n;i++){
+    const kd=Array.isArray(E.kg)?E.kg[i]:E.kg;
+    let kg=carry(id,i,"kg",kd), r=carry(id,i,"r",E.reps);
+    if(dl&&kg>0) kg=rnd(kg*0.8,E.up!==false);
+    rows+=setRow(id,i,kg,r,{bw:E.bw});
+  }
+  const tgt=dl?`${n} set · nhẹ`:E.target;
+  return `<div class="ex sm"><div class="name">${E.n}<span class="kind">${tgt}</span></div><div class="sets">${rows}</div></div>`;
+}
+function daysFor(){
+  const low=lowerFor(week);
+  return [
+    {t:"Bench Press",d:"Buổi 1",main:"bench",sst:"row",small:["incline","ohtri"]},
+    low==="lp"?{t:"Leg Press",d:"Buổi 2",main:"lp",sst:"rdl",small:["legext","adductor"]}
+              :{t:"Deadlift",d:"Buổi 2",main:"dl",sst:"msquat",small:["legcurl","hlr"]},
+    {t:"Overhead Press",d:"Buổi 3",main:"ohp",sst:"mbench",small:["pulldown","curl"]},
+    {t:"Bổ trợ tự chọn",d:"Buổi 4",acc:true,small:["chin","reardelt","lateral","rope"]}
+  ];
+}
+function renderDays(){
+  const box=document.getElementById("days"); box.innerHTML="";
+  daysFor().forEach(D=>{
+    const el=document.createElement("article"); el.className="day"+(D.acc?" acc":"");
+    el.innerHTML=`<header><h3>${D.t}</h3><span class="dow">${D.d}</span></header>`+
+      (D.acc?"":mainHTML(D.main)+sstHTML(D.sst))+D.small.map(smallHTML).join("");
+    box.appendChild(el);
+  });
+}
+const box=document.getElementById("days");
+box.addEventListener("change",e=>{
+  const t=e.target, k=t.dataset.k; if(!k) return;
+  if(t.type==="checkbox"){ if(t.checked) log[k]=true; else delete log[k]; t.closest(".set").classList.toggle("done",t.checked); save(); return; }
+  if(t.value===""){ delete log[k]; save(); renderDays(); return; }
+  const v=parseFloat(t.value); if(isNaN(v)) return;
+  log[k]=v; t.classList.add("edited"); save();
+});
+
+function renderAll(){renderTM();renderTabs();renderDays()}
+bsel.onchange=()=>{block=+bsel.value;S.set("sst4.block",block);renderAll()};
+document.getElementById("stepU").onchange=e=>{stepU=parseFloat(e.target.value);S.set("sst4.stepU",stepU);renderDays()};
+document.getElementById("stepL").onchange=e=>{stepL=parseFloat(e.target.value);S.set("sst4.stepL",stepL);renderDays()};
+document.getElementById("plus").onchange=e=>{plus=e.target.checked;S.set("sst4.plus",plus);renderDays()};
+document.getElementById("reset").onclick=()=>{rm=Object.assign({},DEFAULT);S.set("sst4.rm",rm);renderAll()};
+
+/* ---------- Sao lưu: xuất / nhập ---------- */
+const stEl=document.getElementById("dataStatus");
+const status=(msg,cls)=>{stEl.textContent=msg;stEl.className="status"+(cls?" "+cls:"")};
+function snapshot(){return {app:"sst531",version:1,exported:new Date().toISOString(),
+  data:{rm,block,week,stepU,stepL,plus,log}}}
+document.getElementById("exportBtn").onclick=async()=>{
+  const d=new Date(), pad=n=>String(n).padStart(2,"0");
+  const name=`sst531-saoluu-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+  const text=JSON.stringify(snapshot());
+  const file=new File([text],name,{type:"application/json"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"Sao lưu 5/3/1 SST"});
+      status("Đã mở bảng chia sẻ. Hãy chọn nơi lưu file "+name+".","ok");return;
+    }
+  }catch(e){ if(e&&e.name==="AbortError"){status("Đã hủy xuất file.");return} }
+  const url=URL.createObjectURL(file), a=document.createElement("a");
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  status("Đã tải file "+name+" về máy.","ok");
+};
+let pending=null;
+const conf=document.getElementById("importConfirm");
+document.getElementById("importFile").onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const j=JSON.parse(rd.result);
+      if(!j||j.app!=="sst531"||!j.data||typeof j.data.log!=="object") throw new Error("bad");
+      pending=j.data;
+      const n=Object.keys(j.data.log).filter(k=>k.endsWith("|c")).length;
+      const when=j.exported?new Date(j.exported).toLocaleString("vi-VN"):"không rõ";
+      document.getElementById("importInfo").textContent=`File sao lưu ngày ${when}, có ${n} set đã tích. Nhập file này sẽ thay toàn bộ dữ liệu hiện có trên máy.`;
+      conf.hidden=false; status("");
+    }catch(err){ pending=null; conf.hidden=true; status("File này không phải file sao lưu của app 5/3/1 SST. Hãy chọn file .json đã xuất từ app.","err"); }
+    e.target.value="";
+  };
+  rd.onerror=()=>status("Không đọc được file. Hãy thử chọn lại.","err");
+  rd.readAsText(f);
+};
+document.getElementById("importNo").onclick=()=>{pending=null;conf.hidden=true;status("Đã hủy nhập.")};
+document.getElementById("importYes").onclick=()=>{
+  if(!pending) return; const d=pending;
+  rm=Object.assign({},DEFAULT,d.rm||{}); block=d.block||1; week=(d.week>=0&&d.week<=6)?d.week:0;
+  stepU=d.stepU||1; stepL=d.stepL||2.5; plus=!!d.plus; log=d.log||{};
+  S.set("sst4.rm",rm);S.set("sst4.block",block);S.set("sst4.week",week);
+  S.set("sst4.stepU",stepU);S.set("sst4.stepL",stepL);S.set("sst4.plus",plus);save();
+  bsel.value=block;document.getElementById("stepU").value=String(stepU);
+  document.getElementById("stepL").value=String(stepL);document.getElementById("plus").checked=plus;
+  pending=null;conf.hidden=true;renderAll();status("Đã nhập xong dữ liệu sao lưu.","ok");
+};
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+renderAll();
+})();
+</script>
+
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
